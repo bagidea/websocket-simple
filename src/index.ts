@@ -6,7 +6,7 @@ import {
     ServerResponse
 } from "http"
 
-import { WebSocketServer } from "ws"
+import { WebSocket, WebSocketServer } from "ws"
 
 import HTTPRouter from "./http_router"
 
@@ -28,16 +28,30 @@ httpRouter.start()
 // WebSocket
 
 const wss: WebSocketServer = new WebSocketServer({ server })
+const clients: Array<WebSocket> = new Array<WebSocket>()
 
-wss.on("connection", (ws) => {
+wss.on("connection", (ws: WebSocket) => {
     console.log("Client connected")
 
+    clients.push(ws)
+
     ws.on("message", (msg) => {
-        //console.log("Received: "+msg)
+        console.log("Received: "+msg)
         //ws.send("Echo: "+msg)
+
+        clients.forEach((c: WebSocket) => {
+            c.send("Echo: "+msg)
+        })
     })
 
     ws.on("close", () => {
         console.log("Client disconnected")
+
+        for (let i: number = 0; i < clients.length; i++) {
+            if (clients[i] === ws) {
+                clients.splice(i, 1)
+                break
+            }
+        }
     })
 })
